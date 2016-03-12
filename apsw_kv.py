@@ -147,7 +147,7 @@ class ApswKV(_Queryable, collections.MutableMapping):
 	# XXX What about __eq__?
 	pop        = _wrap_transactional( collections.MutableMapping.pop )
 	popitem    = _wrap_transactional( collections.MutableMapping.popitem )
-	clear      = _wrap_transactional( collections.MutableMapping.clear )
+	# clear      = _wrap_transactional( collections.MutableMapping.clear )  # Redefined below.
 	update     = _wrap_transactional( collections.MutableMapping.update )
 	setdefault = _wrap_transactional( collections.MutableMapping.setdefault )
 
