@@ -13,7 +13,7 @@ def _wrap_transactional(func):
 	return transactional_wrapper
 
 
-class ApswKV(_Table, collections.MutableMapping):
+class ApswKV(Table, collections.MutableMapping):
 	def __init__(self, conn, table):
 		super().__init__(conn, table)
 
@@ -22,7 +22,8 @@ class ApswKV(_Table, collections.MutableMapping):
 			# Names are chosen short to type less when querying by hand.
 			'k primary key, '  # Key
 			'v, '              # Value
-			'ts current_timestamp'
+			'ts current_timestamp',
+			if_not_exists=True
 		)
 
 	# Essential methods for :collections.MutableMapping:
@@ -66,16 +67,17 @@ class ApswKV(_Table, collections.MutableMapping):
 
 	class _ValuesView(collections.ItemsView):
 		def __contains__(self, value):
-			# n = list(self._mapping.select('v', where=('v=?', value), limit=1))
-			# return bool(n)
+			# vals = list(self._mapping.select('v', where=('v=?', value), limit=1))
+			# return bool(vals)
 
 			# [[n]] = self._mapping.select('count(*)', where=('v=?', value), limit=1)
 			# return bool(n)
 
-			subquery, binds = self._mapping._select_sql('v', where=('v=?', value))
-			[[n]] = self._mapping.exec(
-				'select exists ({})'.format(subquery),
-				binds
+			subq = self._mapping._select_q('v', where=('v=?', value))
+			subquery, binds = self._mapping._select_q('v').where('v=?', value)
+			[[n]] = self._mapping.query(
+				'select exists ({})'.format(subq.sql),
+				subq.binds
 			)
 			return bool(n)
 
@@ -96,3 +98,4 @@ class ApswKV(_Table, collections.MutableMapping):
 
 	def keys_for_value(val):
 		return ( row for [row] in self.select('k', where=('v=?', val)) )
+		return ( row for [row] in self.select('k').where('v=?', val) )
